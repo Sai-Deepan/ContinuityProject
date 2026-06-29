@@ -1,0 +1,125 @@
+import { useParams, Link } from "react-router-dom";
+import { mockComponents } from "../data/mock";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
+import { ArrowLeft, Download, ShoppingCart } from "lucide-react";
+import { ProductCard } from "../components/shop/ProductCard";
+import { motion } from "framer-motion";
+
+export default function ProductDetails() {
+  const { id } = useParams();
+  const product = mockComponents.find((c) => c.id === id) || mockComponents[0]; // fallback for demo
+  const relatedProducts = mockComponents.filter((c) => c.category === product.category && c.id !== product.id).slice(0, 3);
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumb Navigation */}
+      <nav className="flex items-center text-sm font-medium text-muted-foreground mb-8">
+        <Link to="/components" className="hover:text-primary transition-colors flex items-center">
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Back to Catalog
+        </Link>
+        <span className="mx-2">/</span>
+        <Link to={`/components?category=${product.category}`} className="hover:text-primary transition-colors">
+          {product.category}
+        </Link>
+        <span className="mx-2">/</span>
+        <span className="text-foreground">{product.name}</span>
+      </nav>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
+        {/* Product Image */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-muted rounded-2xl overflow-hidden aspect-square border border-border group cursor-zoom-in"
+        >
+          <img 
+            src={product.image} 
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-700 ease-in-out"
+          />
+        </motion.div>
+
+        {/* Product Info */}
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex flex-col"
+        >
+          <div className="mb-6">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">{product.name}</h1>
+            <p className="text-lg text-primary font-medium">{product.manufacturer}</p>
+          </div>
+
+          <div className="flex items-center gap-4 mb-6">
+            <span className="text-3xl font-extrabold text-foreground">₹{product.price.toFixed(2)}</span>
+            {product.stock > 0 ? (
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                In Stock ({product.stock} available)
+              </Badge>
+            ) : (
+              <Badge variant="destructive">Out of Stock</Badge>
+            )}
+          </div>
+
+          <p className="text-muted-foreground leading-relaxed mb-8">
+            {product.description}
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 mb-12">
+            <Button size="lg" className="flex-1 h-14 text-lg">
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              Add to Cart
+            </Button>
+            <Button size="lg" variant="outline" className="h-14">
+              <Download className="w-5 h-5 mr-2" />
+              Datasheet
+            </Button>
+          </div>
+
+          {/* Specifications Table */}
+          <div>
+            <h3 className="text-xl font-bold text-foreground mb-4">Technical Specifications</h3>
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm text-left bg-card">
+                <tbody>
+                  {Object.entries(product.specifications).map(([key, value], index) => (
+                    <tr key={key} className={index % 2 === 0 ? "bg-muted/30" : "bg-card"}>
+                      <th className="px-6 py-4 font-medium text-foreground border-r border-border w-1/3">
+                        {key}
+                      </th>
+                      <td className="px-6 py-4 text-muted-foreground">
+                        {value}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className={Object.keys(product.specifications).length % 2 === 0 ? "bg-muted/30" : "bg-card"}>
+                    <th className="px-6 py-4 font-medium text-foreground border-r border-t border-border w-1/3">
+                      Manufacturer Part #
+                    </th>
+                    <td className="px-6 py-4 text-muted-foreground border-t border-border font-mono">
+                      {product.id}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <section className="pt-12 border-t border-border">
+          <h2 className="text-2xl font-bold text-foreground mb-8">Frequently bought together</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {relatedProducts.map((related) => (
+              <ProductCard key={related.id} product={related} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
