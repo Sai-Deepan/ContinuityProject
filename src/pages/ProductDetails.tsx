@@ -3,15 +3,18 @@ import { useState, useEffect } from "react";
 import type { Component } from "../types";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { ArrowLeft, Download, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Download, ShoppingCart, Plus, Minus } from "lucide-react";
 import { ProductCard } from "../components/shop/ProductCard";
 import { motion } from "framer-motion";
+import { useCart } from "../context/CartContext";
 
 export default function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState<Component | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Component[]>([]);
   const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const { addItem } = useCart();
 
   useEffect(() => {
     setLoading(true);
@@ -22,7 +25,10 @@ export default function ProductDetails() {
       .then(([productData, allComponents]) => {
         if (!productData.error) {
           setProduct(productData);
+          document.title = `${productData.name} | Amaze Services`;
           setRelatedProducts(allComponents.filter((c: Component) => c.category === productData.category && c.id !== productData.id).slice(0, 3));
+        } else {
+          document.title = "Product Not Found | Amaze Services";
         }
         setLoading(false);
       })
@@ -66,7 +72,11 @@ export default function ProductDetails() {
           <img 
             src={product.image} 
             alt={product.name}
+            loading="lazy"
             className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-700 ease-in-out"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'https://placehold.co/800?text=No+Image';
+            }}
           />
         </motion.div>
 
@@ -97,10 +107,39 @@ export default function ProductDetails() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
-            <Button size="lg" className="flex-1 h-14 text-lg">
+            <div className="flex items-center space-x-2 bg-muted rounded-md p-1 h-14 w-full sm:w-32 justify-between px-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1 || product.stock === 0}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="text-lg font-medium w-8 text-center">{quantity}</span>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                disabled={quantity >= product.stock || product.stock === 0}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <Button 
+              size="lg" 
+              className="flex-1 h-14 text-lg"
+              onClick={() => {
+                addItem(product, quantity);
+                setQuantity(1); // Reset after adding
+              }}
+              disabled={product.stock === 0}
+            >
               <ShoppingCart className="w-5 h-5 mr-2" />
               Add to Cart
             </Button>
+            
             <Button size="lg" variant="outline" className="h-14">
               <Download className="w-5 h-5 mr-2" />
               Datasheet

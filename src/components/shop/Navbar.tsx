@@ -1,11 +1,26 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "../ui/button";
-import { Package, Menu, Search, ShoppingCart } from "lucide-react";
+import { Menu, Search, ShoppingCart } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import { ThemeToggle } from "../theme-toggle";
+import { useCart } from "../../context/CartContext";
+import { CartSidebar } from "./CartSidebar";
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { itemCount, setIsCartOpen } = useCart();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/components?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/components');
+    }
+  };
 
   const links = [
     { name: "Home", path: "/" },
@@ -37,21 +52,24 @@ export function Navbar() {
           </nav>
           
           <div className="flex items-center space-x-4">
-            <div className="relative w-64">
+            <form onSubmit={handleSearch} className="relative w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <input
                 type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search components..."
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-8"
               />
-            </div>
+            </form>
             <ThemeToggle />
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartOpen(true)}>
               <ShoppingCart className="w-5 h-5" />
-              <span className="absolute top-1 right-1 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-              </span>
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  {itemCount}
+                </span>
+              )}
             </Button>
             <Button asChild>
               <Link to="/admin">Admin</Link>
@@ -61,8 +79,13 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         <div className="flex flex-1 items-center justify-end md:hidden gap-4">
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartOpen(true)}>
             <ShoppingCart className="w-5 h-5" />
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                {itemCount}
+              </span>
+            )}
           </Button>
           <Sheet>
             <SheetTrigger asChild>
@@ -89,6 +112,7 @@ export function Navbar() {
           </Sheet>
         </div>
       </div>
+      <CartSidebar />
     </header>
   );
 }

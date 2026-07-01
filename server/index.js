@@ -1,10 +1,16 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'demo-admin-token-12345';
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
 
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
@@ -38,6 +44,26 @@ const execute = (sql, params = []) => {
 
 // --- ROUTES ---
 
+// Simple Authentication
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    res.json({ token: ADMIN_TOKEN });
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
+});
+
+// Middleware to protect routes
+const requireAuth = (req, res, next) => {
+  const token = req.headers.authorization;
+  if (token === `Bearer ${ADMIN_TOKEN}`) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+};
+
 // GET all components
 app.get('/api/components', async (req, res) => {
   try {
@@ -70,9 +96,17 @@ app.get('/api/components/:id', async (req, res) => {
 });
 
 // POST add component
-app.post('/api/components', async (req, res) => {
+app.post('/api/components', requireAuth, async (req, res) => {
   try {
     const { id, name, manufacturer, category, price, stock, image, description, specifications, datasheetUrl } = req.body;
+    
+    // Validation
+    if (!id || !name || !manufacturer || !category || price === undefined || stock === undefined) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (price <= 0) return res.status(400).json({ error: 'Price must be greater than zero' });
+    if (stock < 0) return res.status(400).json({ error: 'Stock cannot be negative' });
+
     await execute(
       `INSERT INTO components (id, name, manufacturer, category, price, stock, image, description, specifications, datasheetUrl) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -80,14 +114,25 @@ app.post('/api/components', async (req, res) => {
     );
     res.status(201).json({ success: true });
   } catch (err) {
+    if (err.message.includes('UNIQUE constraint failed')) {
+      return res.status(409).json({ error: 'A component with this ID (SKU) already exists' });
+    }
     res.status(500).json({ error: err.message });
   }
 });
 
 // PUT update component
-app.put('/api/components/:id', async (req, res) => {
+app.put('/api/components/:id', requireAuth, async (req, res) => {
   try {
     const { name, manufacturer, category, price, stock, image, description, specifications, datasheetUrl } = req.body;
+    
+    // Validation
+    if (!name || !manufacturer || !category || price === undefined || stock === undefined) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (price <= 0) return res.status(400).json({ error: 'Price must be greater than zero' });
+    if (stock < 0) return res.status(400).json({ error: 'Stock cannot be negative' });
+
     await execute(
       `UPDATE components SET name=?, manufacturer=?, category=?, price=?, stock=?, image=?, description=?, specifications=?, datasheetUrl=? WHERE id=?`,
       [name, manufacturer, category, price, stock, image, description, JSON.stringify(specifications || {}), datasheetUrl, req.params.id]
@@ -99,7 +144,7 @@ app.put('/api/components/:id', async (req, res) => {
 });
 
 // DELETE component
-app.delete('/api/components/:id', async (req, res) => {
+app.delete('/api/components/:id', requireAuth, async (req, res) => {
   try {
     await execute(`DELETE FROM components WHERE id=?`, [req.params.id]);
     res.json({ success: true });

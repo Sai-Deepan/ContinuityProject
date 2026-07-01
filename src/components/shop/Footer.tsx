@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Package } from "lucide-react";
+import { toast } from "sonner";
 
 export function Footer() {
   return (
@@ -38,9 +38,15 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4 text-foreground text-sm uppercase tracking-wider">Company</h3>
             <ul className="space-y-3">
-              <li><Link to="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">About</Link></li>
-              <li><Link to="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
-              <li><Link to="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Terms of Service</Link></li>
+              <li>
+                <a href="#" onClick={(e) => { e.preventDefault(); toast.info("About page is currently unavailable."); }} className="text-sm text-muted-foreground hover:text-primary transition-colors">About</a>
+              </li>
+              <li>
+                <a href="#" onClick={(e) => { e.preventDefault(); toast.info("Contact is not available right now."); }} className="text-sm text-muted-foreground hover:text-primary transition-colors">Contact</a>
+              </li>
+              <li>
+                <a href="#" onClick={(e) => { e.preventDefault(); toast.info("Terms of Service is currently unavailable."); }} className="text-sm text-muted-foreground hover:text-primary transition-colors">Terms of Service</a>
+              </li>
             </ul>
           </div>
         </div>

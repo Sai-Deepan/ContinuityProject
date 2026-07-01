@@ -22,6 +22,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = "Amaze Services | Electronic Components Store";
+  }, []);
+
+  useEffect(() => {
     fetch('/api/components')
       .then(res => res.json())
       .then(data => {
