@@ -1,4 +1,24 @@
-import { categories, manufacturers } from "../../data/mock";
+const categories = [
+  "Microcontrollers",
+  "Sensors",
+  "Resistors",
+  "Capacitors",
+  "ICs",
+  "Development Boards",
+  "Displays",
+  "Power Modules"
+];
+
+const manufacturers = [
+  "Espressif Systems",
+  "Texas Instruments",
+  "Arduino",
+  "Raspberry Pi Foundation",
+  "STMicroelectronics",
+  "Microchip",
+  "Adafruit",
+  "SparkFun"
+];
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";

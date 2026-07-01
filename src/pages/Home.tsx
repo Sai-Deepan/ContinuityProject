@@ -1,12 +1,40 @@
 import { Button } from "../components/ui/button";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { categories, mockComponents } from "../data/mock";
 import { ArrowRight, Cpu, ShieldCheck, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { motion } from "framer-motion";
+import type { Component } from "../types";
+
+const categories = [
+  "Microcontrollers",
+  "Sensors",
+  "Resistors",
+  "Capacitors",
+  "ICs",
+  "Development Boards",
+  "Displays",
+  "Power Modules"
+];
 
 export default function Home() {
-  const featuredComponents = mockComponents.slice(0, 4);
+  const [components, setComponents] = useState<Component[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/components')
+      .then(res => res.json())
+      .then(data => {
+        setComponents(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching components:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  const featuredComponents = components.slice(0, 4);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -95,38 +123,44 @@ export default function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredComponents.map((component, i) => (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-                key={component.id}
-              >
-                <Link to={`/components/${component.id}`}>
-                  <Card className="overflow-hidden hover:shadow-lg transition-all border-border bg-card h-full flex flex-col group">
-                    <div className="aspect-square overflow-hidden bg-muted relative">
-                      <img 
-                        src={component.image} 
-                        alt={component.name}
-                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <CardContent className="p-5 flex-1 flex flex-col">
-                      <div className="text-xs text-primary font-medium mb-2">{component.category}</div>
-                      <h3 className="font-semibold text-lg text-foreground mb-1 line-clamp-1">{component.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-4">{component.manufacturer}</p>
-                      <div className="mt-auto pt-4 flex items-center justify-between border-t border-border">
-                        <span className="font-bold text-lg">₹{component.price.toFixed(2)}</span>
-                        <span className="text-xs font-medium bg-muted text-muted-foreground px-2 py-1 rounded-full">
-                          {component.stock > 0 ? 'In Stock' : 'Out of Stock'}
-                        </span>
+            {loading ? (
+              <div className="col-span-full text-center py-12 text-muted-foreground">Loading components...</div>
+            ) : featuredComponents.length > 0 ? (
+              featuredComponents.map((component, i) => (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.1 }}
+                  key={component.id}
+                >
+                  <Link to={`/components/${component.id}`}>
+                    <Card className="overflow-hidden hover:shadow-lg transition-all border-border bg-card h-full flex flex-col group">
+                      <div className="aspect-square overflow-hidden bg-muted relative">
+                        <img 
+                          src={component.image} 
+                          alt={component.name}
+                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                        />
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
+                      <CardContent className="p-5 flex-1 flex flex-col">
+                        <div className="text-xs text-primary font-medium mb-2">{component.category}</div>
+                        <h3 className="font-semibold text-lg text-foreground mb-1 line-clamp-1">{component.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-4">{component.manufacturer}</p>
+                        <div className="mt-auto pt-4 flex items-center justify-between border-t border-border">
+                          <span className="font-bold text-lg">₹{component.price.toFixed(2)}</span>
+                          <span className="text-xs font-medium bg-muted text-muted-foreground px-2 py-1 rounded-full">
+                            {component.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12 text-muted-foreground">No components available.</div>
+            )}
           </div>
         </div>
       </section>

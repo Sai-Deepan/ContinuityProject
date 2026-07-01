@@ -1,4 +1,5 @@
-import { mockServices } from "../data/mock";
+import { useState, useEffect } from "react";
+import type { Service } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { motion } from "framer-motion";
@@ -12,6 +13,22 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export default function Services() {
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/services')
+      .then(res => res.json())
+      .then(data => {
+        setServices(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching services:", err);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-muted/30">
       <section className="py-20 bg-background border-b">
@@ -28,39 +45,45 @@ export default function Services() {
       <section className="py-20">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {mockServices.map((service, index) => {
-              const Icon = iconMap[service.iconName] || Zap;
-              return (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  key={service.id}
-                >
-                  <Card className="h-full flex flex-col hover:shadow-lg transition-all border-border bg-card group">
-                    <CardHeader className="p-8 pb-4">
-                      <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                        <Icon className="w-7 h-7 text-primary group-hover:text-primary-foreground" />
-                      </div>
-                      <CardTitle className="text-2xl font-bold text-foreground">
-                        {service.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-8 pt-0 flex-1 flex flex-col">
-                      <p className="text-muted-foreground mb-8 leading-relaxed">
-                        {service.description}
-                      </p>
-                      <div className="mt-auto">
-                        <Button variant="outline" className="w-full" asChild>
-                          <Link to="/contact">Request Quote</Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
+            {loading ? (
+              <div className="col-span-full text-center py-12 text-muted-foreground">Loading services...</div>
+            ) : services.length === 0 ? (
+              <div className="col-span-full text-center py-12 text-muted-foreground">No services found.</div>
+            ) : (
+              services.map((service, index) => {
+                const Icon = iconMap[service.iconName] || Zap;
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    key={service.id}
+                  >
+                    <Card className="h-full flex flex-col hover:shadow-lg transition-all border-border bg-card group">
+                      <CardHeader className="p-8 pb-4">
+                        <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                          <Icon className="w-7 h-7 text-primary group-hover:text-primary-foreground" />
+                        </div>
+                        <CardTitle className="text-2xl font-bold text-foreground">
+                          {service.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-8 pt-0 flex-1 flex flex-col">
+                        <p className="text-muted-foreground mb-8 leading-relaxed">
+                          {service.description}
+                        </p>
+                        <div className="mt-auto">
+                          <Button variant="outline" className="w-full" asChild>
+                            <Link to="/contact">Request Quote</Link>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })
+            )}
           </div>
         </div>
       </section>

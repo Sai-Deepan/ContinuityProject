@@ -1,12 +1,26 @@
-import { useState } from "react";
-import { mockComponents } from "../data/mock";
+import { useState, useEffect } from "react";
+import type { Component } from "../types";
 import { ProductCard } from "../components/shop/ProductCard";
 import { FilterSidebar } from "../components/shop/FilterSidebar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { motion } from "framer-motion";
 
 export default function Listings() {
-  const [components] = useState(mockComponents);
+  const [components, setComponents] = useState<Component[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/components')
+      .then(res => res.json())
+      .then(data => {
+        setComponents(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching components:", err);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -41,16 +55,22 @@ export default function Listings() {
 
         <main className="flex-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-            {components.map((component, i) => (
-              <motion.div
-                key={component.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-              >
-                <ProductCard product={component} />
-              </motion.div>
-            ))}
+            {loading ? (
+              <div className="col-span-full text-center py-12 text-muted-foreground">Loading catalog...</div>
+            ) : components.length > 0 ? (
+              components.map((component, i) => (
+                <motion.div
+                  key={component.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: i * 0.05 }}
+                >
+                  <ProductCard product={component} />
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12 text-muted-foreground">No components found.</div>
+            )}
           </div>
 
           <div className="mt-12 flex justify-center">

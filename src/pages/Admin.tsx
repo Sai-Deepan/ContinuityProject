@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { mockComponents } from "../data/mock";
+import { useState, useEffect } from "react";
+import type { Component } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -22,7 +22,26 @@ import {
 import { Plus, Search, Edit2, Trash2 } from "lucide-react";
 
 export default function Admin() {
-  const [components] = useState(mockComponents);
+  const [components, setComponents] = useState<Component[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchComponents = () => {
+    fetch('/api/components')
+      .then(res => res.json())
+      .then(data => {
+        setComponents(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching components:", err);
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchComponents();
+  }, []);
+
   const totalStock = components.reduce((acc, curr) => acc + curr.stock, 0);
 
   return (
@@ -129,29 +148,39 @@ export default function Admin() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {components.map((component) => (
-                  <TableRow key={component.id}>
-                    <TableCell className="font-mono text-xs font-medium text-slate-500">{component.id}</TableCell>
-                    <TableCell className="font-medium text-slate-900">{component.name}</TableCell>
-                    <TableCell>{component.category}</TableCell>
-                    <TableCell className="text-right font-medium">₹{component.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">
-                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${component.stock < 100 ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                        {component.stock}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Edit2 className="h-4 w-4 text-slate-500" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-rose-600">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">Loading components...</TableCell>
                   </TableRow>
-                ))}
+                ) : components.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">No components found.</TableCell>
+                  </TableRow>
+                ) : (
+                  components.map((component) => (
+                    <TableRow key={component.id}>
+                      <TableCell className="font-mono text-xs font-medium text-slate-500">{component.id}</TableCell>
+                      <TableCell className="font-medium text-slate-900">{component.name}</TableCell>
+                      <TableCell>{component.category}</TableCell>
+                      <TableCell className="text-right font-medium">₹{component.price.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${component.stock < 100 ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                          {component.stock}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Edit2 className="h-4 w-4 text-slate-500" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-rose-600">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

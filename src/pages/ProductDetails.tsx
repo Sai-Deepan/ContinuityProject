@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
-import { mockComponents } from "../data/mock";
+import { useState, useEffect } from "react";
+import type { Component } from "../types";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { ArrowLeft, Download, ShoppingCart } from "lucide-react";
@@ -8,8 +9,36 @@ import { motion } from "framer-motion";
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const product = mockComponents.find((c) => c.id === id) || mockComponents[0]; // fallback for demo
-  const relatedProducts = mockComponents.filter((c) => c.category === product.category && c.id !== product.id).slice(0, 3);
+  const [product, setProduct] = useState<Component | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Component[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      fetch(`/api/components/${id}`).then(res => res.json()),
+      fetch('/api/components').then(res => res.json())
+    ])
+      .then(([productData, allComponents]) => {
+        if (!productData.error) {
+          setProduct(productData);
+          setRelatedProducts(allComponents.filter((c: Component) => c.category === productData.category && c.id !== productData.id).slice(0, 3));
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching product:", err);
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) {
+    return <div className="container mx-auto px-4 py-24 text-center text-muted-foreground">Loading product...</div>;
+  }
+
+  if (!product) {
+    return <div className="container mx-auto px-4 py-24 text-center text-muted-foreground">Product not found.</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
